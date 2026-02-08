@@ -107,9 +107,8 @@ const pages = [
     `I love you, Raja. Happy Valentine's! ❤️ \n~ Your "Someone Special"`,
     `OOOPPPPPPS!\n Suspennnnseeeeeee to reveal nhi kiya😶‍🌫️!`,
     `I'm coming Ahmedabad on your Birthday Raja and I can't wait to see you! 🥳🎉`,
-    `[[LIVE_COUNTDOWN]]`,
     `So, this is the end of the letter, but not the end of our story. We have many more chapters to write together, many more memories to create, and many more moments to cherish.`,
-    `GoodBye Raja! \n Love u Lots!😘💕`
+    `[[LIVE_COUNTDOWN]]`,
 ];
 
 let current = 0;
@@ -151,7 +150,7 @@ function typeText() {
     if (!active) return;
 
     if (pages[current] === "[[LIVE_COUNTDOWN]]") {
-        active.innerHTML = `<div class="timer-header"></div><div id="timer-display" class="live-countdown"></div>`;
+        active.innerHTML = `<div class="timer-header">GoodBye Raja! \n Love u Lots!😘💕</div><div id="timer-display" class="live-countdown"></div>`;
         startLiveTimer();
         autoTransitionTimeout = setTimeout(nextPage, 8000); 
         return;
@@ -167,14 +166,6 @@ function typeText() {
         typing = false;
         if (current < pages.length - 1) {
             autoTransitionTimeout = setTimeout(nextPage, 4500); 
-        } else {
-            // Replay Button logic
-            const btn = document.createElement('button');
-            btn.className = "replay-btn";
-            btn.style.marginTop = "20px";
-            btn.innerHTML = "Read Again ❤️";
-            btn.onclick = resetLetter;
-            active.appendChild(btn);
         }
     }
 }
