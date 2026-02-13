@@ -1,3 +1,128 @@
+/* ===========================
+   MUSIC CONFIG
+=========================== */
+
+const START_TIME = 15;
+const START_VOLUME = 5;
+const TARGET_VOLUME = 10;
+
+const FADEOUT_TIME = 77;  // seconds
+const FADEIN_TIME = 96;   // seconds
+
+let player;
+let musicStarted = false;
+let fadeOutDone = false;
+let fadeInDone = false;
+
+/* ===========================
+   YOUTUBE API LOAD
+=========================== */
+
+let tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+document.body.appendChild(tag);
+
+function onYouTubeIframeAPIReady() {
+    player = new YT.Player('youtube-player', {
+        events: {
+            onStateChange: function(event) {
+                // 🔁 LOOP from 15s
+                if (event.data === YT.PlayerState.ENDED) {
+                    resetMusicFlags();
+                    player.seekTo(START_TIME, true);
+                    player.playVideo();
+                }
+            }
+        }
+    });
+}
+
+function resetMusicFlags() {
+    fadeOutDone = false;
+    fadeInDone = false;
+}
+
+function playMusic() {
+    if (player && !musicStarted) {
+        musicStarted = true;
+
+        player.seekTo(START_TIME, true);
+        player.setVolume(START_VOLUME);
+        player.playVideo();
+
+        fadeInVolume(START_VOLUME, TARGET_VOLUME, 3000);
+        monitorTimeline();
+    }
+}
+
+/* ===========================
+   VOLUME CONTROLS
+=========================== */
+
+function fadeInVolume(start, end, duration) {
+    let current = start;
+    const step = 100;
+    const steps = duration / step;
+    const increment = (end - start) / steps;
+
+    const fade = setInterval(() => {
+        current += increment;
+        if (current >= end) {
+            current = end;
+            clearInterval(fade);
+        }
+        player.setVolume(Math.floor(current));
+    }, step);
+}
+
+function fadeOutVolume(start, duration) {
+    let current = start;
+    const step = 100;
+    const steps = duration / step;
+    const decrement = start / steps;
+
+    const fade = setInterval(() => {
+        current -= decrement;
+        if (current <= 0) {
+            current = 0;
+            clearInterval(fade);
+            player.setVolume(0);
+        } else {
+            player.setVolume(Math.floor(current));
+        }
+    }, step);
+}
+
+/* ===========================
+   TIMELINE MONITOR
+=========================== */
+
+function monitorTimeline() {
+    setInterval(() => {
+        if (!player || !player.getCurrentTime) return;
+
+        const t = player.getCurrentTime();
+
+        // 🎵 Fade out at 77s
+        if (t >= FADEOUT_TIME && !fadeOutDone) {
+            fadeOutDone = true;
+            const vol = player.getVolume();
+            fadeOutVolume(vol, 3000);
+        }
+
+        // 🎵 Fade in at 96s
+        if (t >= FADEIN_TIME && !fadeInDone) {
+            fadeInDone = true;
+            fadeInVolume(0, TARGET_VOLUME, 3000);
+        }
+
+    }, 500);
+}
+
+/* ===========================
+   CANVAS PARTICLES
+=========================== */
+
 const canvas = document.getElementById('bg-canvas');
 const ctx = canvas.getContext('2d');
 let particles = [];
@@ -33,13 +158,8 @@ class Particle {
         this.x += this.speedX; 
         this.y += this.speedY;
         
-        if (this.isExplosion) {
-            this.opacity -= 0.015;
-        }
-        
-        if (this.y < -30 && !this.isExplosion) {
-            this.reset(false, false);
-        }
+        if (this.isExplosion) this.opacity -= 0.015;
+        if (this.y < -30 && !this.isExplosion) this.reset(false, false);
     }
 
     draw() {
@@ -53,7 +173,6 @@ class Particle {
     }
 }
 
-// Particle initialization
 for (let i = 0; i < 40; i++) particles.push(new Particle(false));
 
 function animate() {
@@ -66,14 +185,9 @@ function animate() {
 }
 animate();
 
-function start() {
-    document.getElementById('home').style.opacity = 0;
-    setTimeout(() => {
-        document.getElementById('home').style.display = 'none';
-        document.getElementById('stage').style.display = 'flex';
-    }, 1000);
-}
-
+/* ===========================
+   LETTER LOGIC (UNCHANGED)
+=========================== */
 const pages = [
     `Dear Raja,\n Today is quite special, isn't it?`,
     `Our story goes 8 years back now...,\nIndeed a long time, eh?`,
@@ -111,39 +225,19 @@ const pages = [
     `[[LIVE_COUNTDOWN]]`,
 ];
 
+function start() {
+    document.getElementById('home').style.opacity = 0;
+    setTimeout(() => {
+        document.getElementById('home').style.display = 'none';
+        document.getElementById('stage').style.display = 'flex';
+    }, 1000);
+}
+
 let current = 0;
-let typing = false;
 let charIndex = 0;
 let typingTimeout;
 let autoTransitionTimeout;
 let countdownInterval;
-
-function startLiveTimer() {
-    if (countdownInterval) clearInterval(countdownInterval);
-    const targetDate = new Date("February 28, 2026 00:00:00").getTime();
-    
-    countdownInterval = setInterval(() => {
-        const display = document.getElementById('timer-display');
-        if (!display) return;
-        const now = new Date().getTime();
-        const diff = targetDate - now;
-        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const s = Math.floor((diff % (1000 * 60)) / 1000);
-
-        if (diff < 0) {
-            clearInterval(countdownInterval);
-            display.innerHTML = "The time has come! ❤️";
-        } else {
-            display.innerHTML = `
-                <div class="timer-unit"><span class="timer-val">${d}</span><span class="timer-label">Days</span></div>
-                <div class="timer-unit"><span class="timer-val">${h}</span><span class="timer-label">Hrs</span></div>
-                <div class="timer-unit"><span class="timer-val">${m}</span><span class="timer-label">Min</span></div>
-                <div class="timer-unit"><span class="timer-val">${s}</span><span class="timer-label">Sec</span></div>`;
-        }
-    }, 1000);
-}
 
 function typeText() {
     const active = document.querySelector('.letter.active');
@@ -157,16 +251,13 @@ function typeText() {
     }
     
     if (charIndex < pages[current].length) {
-        typing = true;
         let char = pages[current][charIndex];
         active.innerHTML += (char === '\n') ? '<br>' : char;
         charIndex++;
         typingTimeout = setTimeout(typeText, 40);
     } else {
-        typing = false;
-        if (current < pages.length - 1) {
-            autoTransitionTimeout = setTimeout(nextPage, 4000); 
-        }
+        if (current < pages.length - 1)
+            autoTransitionTimeout = setTimeout(nextPage, 4000);
     }
 }
 
@@ -179,30 +270,25 @@ function nextPage() {
     }
 }
 
-function resetLetter() {
-    current = 0;
-    charIndex = 0;
-    typing = false;
-    clearTimeout(typingTimeout);
-    clearTimeout(autoTransitionTimeout);
-    clearInterval(countdownInterval);
-    renderStack();
-    typeText();
-}
-
 function renderStack() {
     const stack = document.getElementById('stack');
     stack.innerHTML = ''; 
-    if (pages[current] !== "[[LIVE_COUNTDOWN]]") clearInterval(countdownInterval);
-    
     const page = document.createElement('div');
     page.className = 'letter active';
     stack.appendChild(page);
 }
 
+/* ===========================
+   HEART CLICK
+=========================== */
+
 document.getElementById('mainHeart').addEventListener('click', () => {
     document.getElementById('envelope').classList.add('open');
+
+    playMusic();
+
     for (let i = 0; i < 70; i++) particles.push(new Particle(true));
+
     setTimeout(() => { renderStack(); typeText(); }, 1100);
 });
 
@@ -210,4 +296,3 @@ window.addEventListener('resize', () => {
     canvas.width = window.innerWidth; 
     canvas.height = window.innerHeight; 
 });
-
